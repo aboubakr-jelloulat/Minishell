@@ -1,123 +1,98 @@
+<div align="center">
+
+# MINISHELL
+
+**A Unix shell rebuilt from the ground up no shortcuts, no library doing the thinking for you**
+
 ![GNU/Linux](https://img.shields.io/badge/GNU%2FLinux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![Bash](https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![Shell](https://img.shields.io/badge/Shell_Script-121011?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![C](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white)
-![Makefile](https://img.shields.io/badge/Makefile-003366?style=for-the-badge&logo=cmake&logoColor=white)
+[![42](https://img.shields.io/badge/42-Project-000000?style=for-the-badge&logo=42&logoColor=white)](https://www.42network.org/)
 
+![Terminal demo](https://readme-typing-svg.demolab.com/?font=Fira+Code&size=20&duration=2500&pause=800&color=39FF14&background=0D1117&center=true&vCenter=true&width=600&height=60&lines=minishell%24+ls+-la+%7C+grep+%22.c%22+%7C+wc+-l;minishell%24+export+PATH%3D%24PATH%3A.%2Fbin;minishell%24+cat+%3C%3C+EOF;minishell%24+echo+%22built+from+scratch+in+C%22)
 
-# 🐚 Minishell
+</div>
 
-
-
-
+---
 
 ## Overview
 
-**Minishell** is a simplified implementation of a Unix shell This project recreates the core functionality of bash, providing users with a command-line interface to interact with the operating system. The shell supports command execution, built-in commands, environment variable management, and advanced features like pipes and redirections.
+Minishell is a working reimplementation of the core of `bash`, built entirely from scratch in C. It parses a command line the way a real shell does, resolves it into an executable pipeline, and runs it handling built-ins, environment variables, pipes, redirections, and signals along the way.
 
+The point of the project is not to copy bash's output, but to understand what actually happens between typing a command and seeing a process run: tokenizing, parsing, expansion, forking, and process control.
 
-### Advanced Features
-- **Pipes (`|`)**: Connect multiple commands for data flow
-- **Redirections**: 
-  - Input redirection (`<`)
-  - Output redirection (`>`)
-  - Append redirection (`>>`)
-  - Here document (`<<`)
-- **Quote Handling**: Proper parsing of single and double quotes
-- **Variable Expansion**: Support for `$VAR` and `${VAR}` syntax
-- **Exit Status**: Proper handling of command exit codes
+## What It Handles
 
-### Signal Management
-- **CTRL+C**: Interrupt current command
-- **CTRL+D**: Exit shell gracefully
-- **CTRL+\\**: Quit signal handling
+**Parsing and execution**
+- Full command execution with argument and path resolution
+- Pipes (`|`) chaining any number of commands together
+- Redirections: input (`<`), output (`>`), append (`>>`), heredoc (`<<`)
+- Single and double quote parsing, including nested cases
+- `$VAR` and `${VAR}` environment variable expansion
+- Correct exit status propagation for every command
 
+**Signals**
+- `Ctrl+C` interrupts the running command and returns to a fresh prompt
+- `Ctrl+D` exits the shell cleanly on an empty line
+- `Ctrl+\` is ignored at the prompt and handled properly inside child processes
 
-### Required Libraries
-- `readline` - Command line editing and history
-- `termcap` - Terminal capability database (dependency of readline)
+## Requirements
+
+- `readline`  command-line editing and history
+- `termcap`  terminal capability database, required by readline
 
 ## Installation
 
-### Step 1: Install Readline Library
-
-#### On Linux (Ubuntu/Debian):
+**Ubuntu / Debian**
 ```bash
 sudo apt-get update
 sudo apt-get install libreadline-dev
 ```
 
-#### On Linux (CentOS/RHEL/Fedora):
+**Fedora**
 ```bash
-# CentOS/RHEL
-sudo yum install readline-devel
-
-# Fedora
 sudo dnf install readline-devel
 ```
 
-#### On macOS:
+**macOS**
 ```bash
-# Using Homebrew (recommended)
 brew install readline
-
-# Using MacPorts
-sudo port install readline
 ```
 
-### Step 2: Clone and Build
-
+**Build and run**
 ```bash
-# Clone the repository
 git clone https://github.com/aboubakr-jelloulat/Minishell.git
 cd Minishell
-
-# Compile the project
 make
-
-# Clean build files (optional)
-make clean
-```
-
-### Step 3: Run Minishell
-
-```bash
 ./minishell
 ```
 
-##  Usage
+## Usage
 
-### Basic Command Execution
+**Basic commands**
 ```bash
 minishell$ ls -la
 minishell$ pwd
 minishell$ echo "Hello, World!"
 ```
 
-### Environment Variables
+**Environment variables**
 ```bash
 minishell$ export MY_VAR="Hello"
 minishell$ echo $MY_VAR
 minishell$ unset MY_VAR
 ```
 
-### Pipes and Redirections
+**Pipes and redirections**
 ```bash
-# Using pipes
 minishell$ ls -la | grep ".c" | wc -l
-
-# Output redirection
 minishell$ echo "Hello" > output.txt
-minishell$ cat output.txt
-
-# Input redirection
 minishell$ wc -l < input.txt
-
-# Append redirection
 minishell$ echo "World" >> output.txt
 ```
 
-### Here Document
+**Heredoc**
 ```bash
 minishell$ cat << EOF
 > This is a here document
@@ -125,61 +100,44 @@ minishell$ cat << EOF
 > EOF
 ```
 
-### Quote Handling
+**Quoting**
 ```bash
-minishell$ echo "Hello $USER"     # Variable expansion
-minishell$ echo 'Hello $USER'     # Literal string
-minishell$ echo "It's a \"test\""  # Escaped quotes
+minishell$ echo "Hello $USER"      # expanded
+minishell$ echo 'Hello $USER'      # literal
+minishell$ echo "It's a \"test\""  # escaped
 ```
 
-## 📡 Signal Handling
-
-Minishell properly handles Unix signals to provide a smooth user experience:
-
-- **SIGINT (Ctrl+C)**: Interrupts the current command and displays a new prompt
-- **SIGQUIT (Ctrl+\\)**: Ignored in interactive mode, handled in child processes
-- **EOF (Ctrl+D)**: Cleanly exits the shell
-
-##  Technical Implementation
-
-### Architecture Overview
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│     Lexer       │───▶│     Parser      │───▶│    Executor     │
-│   (Tokenizer)   │    │  (AST Builder)  │    │ (Command Runner)│
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Input Handling  │    │ Syntax Analysis │    │ Process Control │
-│   & History     │    │   & Validation  │    │   & Built-ins   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-##  Project Structure
+## Architecture
 
 ```
-MINISHELL/
+Lexer  ─────▶  Parser  ─────▶  Executor
+(tokenizer)    (AST builder)    (command runner)
+
+   │               │                │
+   ▼               ▼                ▼
+Input &        Syntax analysis   Process control
+history         & validation      & built-ins
+```
+
+## Project Structure
+
+```
+minishell/
 ├── includes/
-│   ├── enums.h         # Enumeration definitions
-│   ├── minishell.h     # Main header file
-│   ├── prototypes.h    # Function prototypes
-│   └── structs.h       # Data structure definitions
+│   ├── enums.h
+│   ├── minishell.h
+│   ├── prototypes.h
+│   └── structs.h
 ├── src/
-│   ├── .build/         # Build artifacts and object files
-│   ├── builtins/       # Built-in command implementations
-│   ├── env/            # Environment variable management
-│   ├── Error/          # Error handling and reporting
-│   ├── exec/           # Command execution and process management
-│   ├── heredoc/        # Here document implementation
-│   ├── lib/            # Custom library functions
-│   ├── parsing/        # Syntax analysis and command parsing
-│   ├── redirection/    # Input/output redirection handling
-│   ├── tokenizer/      # Tokenization and lexical analysis
-│   └── main.c          # Entry point and main loop
-├── Makefile            # Build configuration
-└── README.md           # This file
+│   ├── builtins/       built-in command implementations
+│   ├── env/             environment variable management
+│   ├── Error/            error handling and reporting
+│   ├── exec/              command execution and process management
+│   ├── heredoc/            here-document implementation
+│   ├── lib/                 custom library functions
+│   ├── parsing/               syntax analysis and command parsing
+│   ├── redirection/            input/output redirection handling
+│   ├── tokenizer/                lexical analysis
+│   └── main.c                       entry point and main loop
+└── Makefile
 ```
-
-
----
